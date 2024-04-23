@@ -1,75 +1,65 @@
 package com.example.crud.ex.controller;
 
+import com.example.crud.ex.model.Employee;
+import com.example.crud.ex.Repository.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/employees")
 public class EmployeeController {
 
+    private final EmployeeService employeeService;
+
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public EmployeeController(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
 
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getEmployees(){
-        String sql = "SELECT * FROM employees";
-        List<Map<String, Object>> employees = jdbcTemplate.queryForList(sql);
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        List<Employee> employees = employeeService.getAllEmployees();
         return ResponseEntity.ok(employees);
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<Map<String, Object>>> getEmployeeByColumn(
-            @RequestParam String columnName,
-            @RequestParam String columnValue) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Employee> getEmployeeById(@PathVariable int id) {
+        Optional<Employee> employee = employeeService.getEmployeeById(id);
+        return employee.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
 
-        String sql = "SELECT * FROM employees WHERE " + columnName + " = ?";
-        List<Map<String, Object>> employees = jdbcTemplate.queryForList(sql, columnValue);
+    @GetMapping("/byName")
+    public ResponseEntity<List<Employee>> getEmployeesByNames(@RequestParam List<String> names) {
+        List<Employee> employees = employeeService.getEmployeesByNames(names);
+        return ResponseEntity.ok(employees);
+    }
+
+    @GetMapping("/byPlace")
+    public ResponseEntity<List<Employee>> getEmployeesByPlaces(@RequestParam List<String> places) {
+        List<Employee> employees = employeeService.getEmployeesByPlaces(places);
         return ResponseEntity.ok(employees);
     }
 
     @PostMapping
-    public ResponseEntity<String> createEmployee(@RequestBody Map<String, Object> employee){
-        String sql = "INSERT INTO employees (id, name, place) VALUES (?, ?, ?)";
-        jdbcTemplate.update(sql,employee.get("id"), employee.get("name"), employee.get("place"));
-        return ResponseEntity.ok("Employee created successfully");
+    public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
+        Employee createdEmployee = employeeService.addEmployee(employee);
+        return ResponseEntity.ok(createdEmployee);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updateEmployeeByColumn(
-            @PathVariable Integer id,
-            @RequestParam String columnName,
-            @RequestParam String columnValue) {
-
-        String sql = "UPDATE employees SET " + columnName + " = ? WHERE id = ?";
-        jdbcTemplate.update(sql, columnValue, id);
-        return ResponseEntity.ok("Employee updated successfully");
+    public ResponseEntity<Employee> updateEmployee(@PathVariable int id, @RequestBody Employee employee) {
+        employee.setId(id);
+        Employee updatedEmployee = employeeService.updateEmployee(employee);
+        return ResponseEntity.ok(updatedEmployee);
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteEmployeeByColumn(
-            @RequestParam(required = false) Integer id,
-            @RequestParam(required = false) String columnName,
-            @RequestParam(required = false) String columnValue) {
-
-        String sql = "";
-        if (id != null) {
-            sql = "DELETE FROM employees WHERE id = ?";
-            jdbcTemplate.update(sql, id);
-        } else if (columnName != null && columnValue != null) {
-            sql = "DELETE FROM employees WHERE " + columnName + " = ?";
-            jdbcTemplate.update(sql, columnValue);
-        } else {
-            return ResponseEntity.badRequest().body("Either 'id' or 'columnName' and 'columnValue' must be provided.");
-        }
-
-        return ResponseEntity.ok("Employee deleted successfully");
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable int id) {
+        employeeService.deleteEmployee(id);
+        return ResponseEntity.noContent().build();
     }
-
 }
-
