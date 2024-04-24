@@ -32,17 +32,18 @@ public class EmployeeController {
         return employee.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/byName")
-    public ResponseEntity<List<Employee>> getEmployeesByNames(@RequestParam List<String> names) {
-        List<Employee> employees = employeeService.getEmployeesByNames(names);
+    @GetMapping("/byNames")
+    public ResponseEntity<List<Employee>> getEmployeesByNames(@RequestBody RequestWithNames request) {
+        List<Employee> employees = employeeService.getEmployeesByNames(request.getNames());
         return ResponseEntity.ok(employees);
     }
 
-    @GetMapping("/byPlace")
-    public ResponseEntity<List<Employee>> getEmployeesByPlaces(@RequestParam List<String> places) {
-        List<Employee> employees = employeeService.getEmployeesByPlaces(places);
+    @GetMapping("/byPlaces")
+    public ResponseEntity<List<Employee>> getEmployeesByPlaces(@RequestBody RequestWithPlaces request) {
+        List<Employee> employees = employeeService.getEmployeesByPlaces(request.getPlaces());
         return ResponseEntity.ok(employees);
     }
+
 
     @PostMapping
     public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
@@ -61,5 +62,45 @@ public class EmployeeController {
     public ResponseEntity<Void> deleteEmployee(@PathVariable int id) {
         employeeService.deleteEmployee(id);
         return ResponseEntity.noContent().build();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class RequestWithNames {
+    private List<String> names;
+
+    public List<String> getNames() {
+        return names;
+    }
+
+    public void setNames(List<String> names) {
+        this.names = names;
+    }
+}
+
+class RequestWithPlaces {
+    private List<String> places;
+
+    public List<String> getPlaces() {
+        return places;
+    }
+
+    public void setPlaces(List<String> places) {
+        this.places = places;
     }
 }
